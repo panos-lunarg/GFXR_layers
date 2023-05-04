@@ -1,0 +1,2 @@
+include ':perfetto_layer'
+project(':perfetto_layer').projectDir = file('perfetto_layer')
