@@ -26,7 +26,7 @@
 # Description: CMake script for framework util target
 ###############################################################################
 
-add_library(perfetto STATIC ${CMAKE_CURRENT_LIST_DIR}/../external/perfetto/sdk/perfetto.cc)
+add_library(perfetto STATIC ${CMAKE_CURRENT_LIST_DIR}/../../external/perfetto/sdk/perfetto.cc)
 
 add_library(VkLayer_gfxreconstruct_perfetto SHARED "")
 
@@ -41,10 +41,10 @@ target_compile_definitions(VkLayer_gfxreconstruct_perfetto PRIVATE VK_NO_PROTOTY
 
 target_include_directories(VkLayer_gfxreconstruct_perfetto
                            PUBLIC
-                               ${CMAKE_SOURCE_DIR}/layers
-                               ${CMAKE_SOURCE_DIR}/layers/GFXR_layers/external/perfetto/sdk
-                               ${CMAKE_SOURCE_DIR}/framework)
+                               ${CMAKE_SOURCE_DIR}/
+                               ${CMAKE_SOURCE_DIR}/base_layer
+                               ${CMAKE_SOURCE_DIR}/external/perfetto/sdk
+                               ${CMAKE_SOURCE_DIR}/external/Vulkan-Headers/include
+)
 
-target_link_libraries(VkLayer_gfxreconstruct_perfetto gfxrecon_util perfetto)
-
-common_build_directives(VkLayer_gfxreconstruct_perfetto)
+target_link_libraries(VkLayer_gfxreconstruct_perfetto perfetto)

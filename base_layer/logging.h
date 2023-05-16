@@ -21,11 +21,15 @@
 ** DEALINGS IN THE SOFTWARE.
 */
 
-#ifndef GFXRECON_PERFETTO_TRACING_CATEGORIES_H
-#define GFXRECON_PERFETTO_TRACING_CATEGORIES_H
+#ifndef LOGGING_H_
+#define LOGGING_H_
 
-#include "perfetto.h"
+#include <stdarg.h>
 
-PERFETTO_DEFINE_CATEGORIES(perfetto::Category("GFXR").SetDescription("GFXR Queue submissions"));
+namespace base_layer
+{
+void base_layer_print_info(const char* format, ...);
+void base_layer_print_error(const char* format, ...);
+} // namespace base_layer
 
-#endif /* GFXRECON_PERFETTO_TRACING_CATEGORIES_H */
+#endif // LOGGING_H_

@@ -21,23 +21,19 @@
 ** DEALINGS IN THE SOFTWARE.
 */
 
-#define GFXRECON_LAYER_NAME "VK_LAYER_LUNARG_gfxreconstruct_perfetto_layer"
-#define GFXRECON_LAYER_VERSION_MAJOR 0
-#define GFXRECON_LAYER_VERSION_MINOR 1
-#define GFXRECON_LAYER_VERSION_PATCH 0
-#define GFXRECON_LAYER_DESCRIPTION "GFXReconstruct perfetto layer"
-#define GFXRECON_LAYER_VERSION_DESIGNATION "-dev"
+#define LAYER_NAME "VK_LAYER_LUNARG_gfxreconstruct_perfetto_layer"
+#define LAYER_VERSION_MAJOR 0
+#define LAYER_VERSION_MINOR 1
+#define LAYER_VERSION_PATCH 0
+#define LAYER_DESCRIPTION "GFXReconstruct perfetto layer"
+#define LAYER_VERSION_DESIGNATION "-dev"
 
-#include "../../base_layer/child_layer.h"
-#include "../../base_layer/base_layer.inc"
+#include "base_layer/child_layer.h"
+#include "base_layer/base_layer.inc"
 
 #include "perfetto_tracing_categories.h"
-#include "util/logging.h"
-#include "format/format.h"
 
 #include <sstream>
-
-GFXRECON_BEGIN_NAMESPACE(gfxrecon)
 
 static void InitializePerfetto()
 {
@@ -55,7 +51,7 @@ static void InitializePerfetto()
     }
 }
 
-typedef format::HandleEncodeType(VKAPI_PTR* PFN_vkGetBlockIndexGFXR)();
+typedef uint64_t(VKAPI_PTR* PFN_vkGetBlockIndexGFXR)();
 static PFN_vkGetBlockIndexGFXR GetBlockIndexGFXR_fp = nullptr;
 
 VkResult layer_CreateInstance(const VkInstanceCreateInfo*  pCreateInfo,
@@ -66,7 +62,7 @@ VkResult layer_CreateInstance(const VkInstanceCreateInfo*  pCreateInfo,
 
     assert(*pInstance != VK_NULL_HANDLE);
 
-    instance_dispatch_table* instance_table = get_instance_handle(*pInstance);
+    base_layer::instance_dispatch_table* instance_table = base_layer::get_instance_handle(*pInstance);
 
     if (instance_table && instance_table->dispatch_table.GetInstanceProcAddr)
     {
@@ -75,16 +71,16 @@ VkResult layer_CreateInstance(const VkInstanceCreateInfo*  pCreateInfo,
 
         if (GetBlockIndexGFXR_fp)
         {
-            base_layer_print_info("Pointer to GetBlockIndexGFXR was acquired\n");
+            base_layer::base_layer_print_info("Pointer to GetBlockIndexGFXR was acquired\n");
         }
         else
         {
-            base_layer_print_error("Pointer to GetBlockIndexGFXR was NOT acquired\n");
+            base_layer::base_layer_print_error("Pointer to GetBlockIndexGFXR was NOT acquired\n");
         }
     }
     else
     {
-        base_layer_print_error("Retrieving instance table for instance %p failed\n", *pInstance);
+        base_layer::base_layer_print_error("Retrieving instance table for instance %p failed\n", *pInstance);
     }
 
     return VK_SUCCESS;
@@ -95,24 +91,24 @@ VkResult layer_CreateDevice(VkPhysicalDevice             physicalDevice,
                             const VkAllocationCallbacks* pAllocator,
                             VkDevice*                    pDevice)
 {
-    device_dispatch_table* device_table = get_device_handle(*pDevice);
+    base_layer::device_dispatch_table* device_table = base_layer::get_device_handle(*pDevice);
     if (device_table)
     {
         if (device_table->dispatch_table.QueueSubmit == nullptr)
         {
-            base_layer_print_error("Pointer to QueueSubmit in dispatch table for device %p has not been initialized\n",
-                                   *pDevice);
+            base_layer::base_layer_print_error(
+                "Pointer to QueueSubmit in dispatch table for device %p has not been initialized\n", *pDevice);
         }
 
         if (device_table->dispatch_table.QueuePresentKHR == nullptr)
         {
-            base_layer_print_error(
+            base_layer::base_layer_print_error(
                 "Pointer to QueuePresentKHR in dispatch table for device %p has not been initialized\n", *pDevice);
         }
     }
     else
     {
-        base_layer_print_error("Retrieving device table for device %p failed\n", *pDevice);
+        base_layer::base_layer_print_error("Retrieving device table for device %p failed\n", *pDevice);
     }
 
     return VK_SUCCESS;
@@ -125,7 +121,7 @@ VKAPI_ATTR VkResult VKAPI_CALL layer_QueueSubmit(VkQueue             queue,
 {
     if (pSubmits && pSubmits->commandBufferCount && pSubmits->pCommandBuffers)
     {
-        const format::HandleEncodeType block_index = GetBlockIndexGFXR_fp ? GetBlockIndexGFXR_fp() : 0;
+        const uint64_t block_index = GetBlockIndexGFXR_fp ? GetBlockIndexGFXR_fp() : 0;
 
         TRACE_EVENT_INSTANT("GFXR", "vkQueueSubmit", [&](perfetto::EventContext ctx) {
             ctx.AddDebugAnnotation(perfetto::DynamicString{ "vkQueueSubmit:" }, block_index);
@@ -145,8 +141,9 @@ VKAPI_ATTR VkResult VKAPI_CALL layer_QueueSubmit(VkQueue             queue,
         TRACE_EVENT_INSTANT("GFXR", "vkQueueSubmit (empty)", [&](perfetto::EventContext ctx) {});
     }
 
-    VkResult               result       = VK_SUCCESS;
-    device_dispatch_table* device_table = get_device_handle(queue);
+    // Forward function to next layer / driver
+    VkResult                           result       = VK_SUCCESS;
+    base_layer::device_dispatch_table* device_table = base_layer::get_device_handle(queue);
     if (device_table && device_table->dispatch_table.QueueSubmit)
     {
         result = device_table->dispatch_table.QueueSubmit(queue, submitCount, pSubmits, fence);
@@ -157,13 +154,14 @@ VKAPI_ATTR VkResult VKAPI_CALL layer_QueueSubmit(VkQueue             queue,
 
 VKAPI_ATTR VkResult VKAPI_CALL layer_vkQueuePresentKHR(VkQueue queue, const VkPresentInfoKHR* pPresentInfo)
 {
-    const format::HandleEncodeType block_index = GetBlockIndexGFXR_fp ? GetBlockIndexGFXR_fp() : 0;
+    const uint64_t block_index = GetBlockIndexGFXR_fp ? GetBlockIndexGFXR_fp() : 0;
 
     const std::string submit_name = "QueuePresent: " + std::to_string(block_index);
     TRACE_EVENT_INSTANT("GFXR", perfetto::DynamicString{ submit_name.c_str() }, "Command ID:", block_index);
 
-    VkResult               result       = VK_SUCCESS;
-    device_dispatch_table* device_table = get_device_handle(queue);
+    // Forward function to next layer / driver
+    VkResult                           result       = VK_SUCCESS;
+    base_layer::device_dispatch_table* device_table = base_layer::get_device_handle(queue);
     if (device_table && device_table->dispatch_table.QueuePresentKHR)
     {
         result = device_table->dispatch_table.QueuePresentKHR(queue, pPresentInfo);
@@ -174,7 +172,7 @@ VKAPI_ATTR VkResult VKAPI_CALL layer_vkQueuePresentKHR(VkQueue queue, const VkPr
 
 VKAPI_ATTR PFN_vkVoidFunction VKAPI_CALL layer_GetInstanceProcAddr(VkInstance instance, const char* pName)
 {
-    PFN_vkVoidFunction result = base_layer_GetInstanceProcAddr(instance, pName);
+    PFN_vkVoidFunction result = base_layer::base_layer_GetInstanceProcAddr(instance, pName);
 
     return result;
 }
@@ -187,7 +185,5 @@ VKAPI_ATTR PFN_vkVoidFunction VKAPI_CALL layer_GetDeviceProcAddr(VkDevice device
     if (!strcmp(pName, "vkQueuePresentKHR"))
         return (PFN_vkVoidFunction)layer_vkQueuePresentKHR;
 
-    return base_layer_GetDeviceProcAddr(device, pName);
+    return base_layer::base_layer_GetDeviceProcAddr(device, pName);
 }
-
-GFXRECON_END_NAMESPACE(gfxrecon)
