@@ -28,7 +28,7 @@
 
 #include "vulkan/vulkan.h"
 
-#include <mutex>
+#include <shared_mutex>
 #include <unordered_map>
 
 #ifndef LAYER_NAME
@@ -102,22 +102,22 @@ struct device_dispatch_table
     DeviceTable dispatch_table;
 };
 
-static std::mutex                                               global_lock;
+static std::shared_mutex                                        global_lock;
 static std::unordered_map<const void*, instance_dispatch_table> instance_handles;
 static std::unordered_map<const void*, device_dispatch_table>   device_handles;
 
 static InstanceTable* add_instance_handle(VkInstance instance)
 {
     // Store the instance for use with vkCreateDevice.
-    std::lock_guard<std::mutex> lock(global_lock);
+    std::unique_lock<std::shared_mutex> lock(global_lock);
     instance_handles[GetDispatchKey(instance)] = { instance, InstanceTable() };
     return &instance_handles[GetDispatchKey(instance)].dispatch_table;
 }
 
 static void remove_instance_handle(const void* handle)
 {
-    std::lock_guard<std::mutex> lock(global_lock);
-    auto                        entry = instance_handles.find(GetDispatchKey(handle));
+    std::unique_lock<std::shared_mutex> lock(global_lock);
+    auto                                entry = instance_handles.find(GetDispatchKey(handle));
     if (entry != instance_handles.end())
     {
         instance_handles.erase(entry);
@@ -126,23 +126,23 @@ static void remove_instance_handle(const void* handle)
 
 static instance_dispatch_table* get_instance_handle(const void* handle)
 {
-    std::lock_guard<std::mutex> lock(global_lock);
-    auto                        entry = instance_handles.find(GetDispatchKey(handle));
+    std::shared_lock<std::shared_mutex> lock(global_lock);
+    auto                                entry = instance_handles.find(GetDispatchKey(handle));
     return (entry != instance_handles.end()) ? &entry->second : nullptr;
 }
 
 static DeviceTable* add_device_handle(VkDevice device)
 {
     // Store the instance for use with vkCreateDevice.
-    std::lock_guard<std::mutex> lock(global_lock);
+    std::unique_lock<std::shared_mutex> lock(global_lock);
     device_handles[GetDispatchKey(device)] = { device, DeviceTable() };
     return &device_handles[GetDispatchKey(device)].dispatch_table;
 }
 
 static void remove_device_handle(const void* handle)
 {
-    std::lock_guard<std::mutex> lock(global_lock);
-    auto                        entry = device_handles.find(GetDispatchKey(handle));
+    std::unique_lock<std::shared_mutex> lock(global_lock);
+    auto                                entry = device_handles.find(GetDispatchKey(handle));
     if (entry != device_handles.end())
     {
         device_handles.erase(entry);
@@ -151,8 +151,8 @@ static void remove_device_handle(const void* handle)
 
 static device_dispatch_table* get_device_handle(const void* handle)
 {
-    std::lock_guard<std::mutex> lock(global_lock);
-    auto                        entry = device_handles.find(GetDispatchKey(handle));
+    std::shared_lock<std::shared_mutex> lock(global_lock);
+    auto                                entry = device_handles.find(GetDispatchKey(handle));
     return (entry != device_handles.end()) ? &entry->second : nullptr;
 }
 

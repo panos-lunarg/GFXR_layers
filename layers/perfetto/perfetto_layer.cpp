@@ -21,7 +21,7 @@
 ** DEALINGS IN THE SOFTWARE.
 */
 
-#define LAYER_NAME "VK_LAYER_LUNARG_gfxreconstruct_perfetto_layer"
+#define LAYER_NAME "VK_LAYER_LUNARG_gfxreconstruct_perfetto"
 #define LAYER_VERSION_MAJOR 0
 #define LAYER_VERSION_MINOR 1
 #define LAYER_VERSION_PATCH 0

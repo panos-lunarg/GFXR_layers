@@ -4,8 +4,8 @@
 - Push perfetto configuration file gfxr_events.cfg to the phone
 - Start a gfxr capture as normal but enable the new layer as well. The perfetto layer must be loaded **before** the GFXR layer.
 ```
-adb shell "setprop debug.vulkan.layers VK_LAYER_LUNARG_gfxreconstruct_perfetto_layer;VK_LAYER_LUNARG_gfxreconstruct"
-adb shell "settings put global gpu_debug_layers VK_LAYER_LUNARG_gfxreconstruct_perfetto_layer;VK_LAYER_LUNARG_gfxreconstruct"
+adb shell "setprop debug.vulkan.layers VK_LAYER_LUNARG_gfxreconstruct_perfetto_layer:VK_LAYER_LUNARG_gfxreconstruct"
+adb shell "settings put global gpu_debug_layers VK_LAYER_LUNARG_gfxreconstruct_perfetto_layer:VK_LAYER_LUNARG_gfxreconstruct"
 ```
 
 - Perfetto is enabled with:
