@@ -28,7 +28,6 @@
 #define LAYER_DESCRIPTION "GFXReconstruct perfetto layer"
 #define LAYER_VERSION_DESIGNATION "-dev"
 
-#include "base_layer/child_layer.h"
 #include "base_layer/base_layer.inc"
 
 #include "perfetto_tracing_categories.h"
