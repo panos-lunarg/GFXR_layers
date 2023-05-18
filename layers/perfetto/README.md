@@ -1,11 +1,11 @@
 # Capturing a perfetto trace on Android
 
-- Push generated layer .so to phone and copy it to the application's folder in /data/app
-- Push perfetto configuration file gfxr_events.cfg to the phone
+- Push generated layer `.so` to phone and copy it to the application's folder in /data/app
+- Push perfetto configuration file `gfxr_events.cfg` to the phone
 - Start a gfxr capture as normal but enable the new layer as well. The perfetto layer must be loaded **before** the GFXR layer.
 ```
-adb shell "setprop debug.vulkan.layers VK_LAYER_LUNARG_gfxreconstruct_perfetto_layer:VK_LAYER_LUNARG_gfxreconstruct"
-adb shell "settings put global gpu_debug_layers VK_LAYER_LUNARG_gfxreconstruct_perfetto_layer:VK_LAYER_LUNARG_gfxreconstruct"
+adb shell "setprop debug.vulkan.layers VK_LAYER_LUNARG_gfxreconstruct_perfetto:VK_LAYER_LUNARG_gfxreconstruct"
+adb shell "settings put global gpu_debug_layers VK_LAYER_LUNARG_gfxreconstruct_perfetto:VK_LAYER_LUNARG_gfxreconstruct"
 ```
 
 - Perfetto is enabled with:

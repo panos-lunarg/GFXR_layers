@@ -15,6 +15,8 @@ Each implemented layer must `#include` the `base_layer/base_layer.inc` file in i
 #define LAYER_VERSION_PATCH 0
 #define LAYER_DESCRIPTION "GFXReconstruct perfetto layer"
 #define LAYER_VERSION_DESIGNATION "-dev"
+
+#include "base_layer/base_layer.inc"
 ```
 
 Each implemented layer must define the functions that are declared in the `base_layer/child_layer.h` header file which are the following:
