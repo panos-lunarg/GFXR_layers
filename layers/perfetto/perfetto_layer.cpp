@@ -118,10 +118,17 @@ VKAPI_ATTR VkResult VKAPI_CALL layer_QueueSubmit(VkQueue             queue,
                                                  const VkSubmitInfo* pSubmits,
                                                  VkFence             fence)
 {
+    // Forward function to next layer / driver
+    VkResult                           result       = VK_SUCCESS;
+    base_layer::device_dispatch_table* device_table = base_layer::get_device_handle(queue);
+    if (device_table && device_table->dispatch_table.QueueSubmit)
+    {
+        result = device_table->dispatch_table.QueueSubmit(queue, submitCount, pSubmits, fence);
+    }
+
     if (pSubmits && pSubmits->commandBufferCount && pSubmits->pCommandBuffers)
     {
         const uint64_t block_index = GetBlockIndexGFXR_fp ? GetBlockIndexGFXR_fp() : 0;
-
         TRACE_EVENT_INSTANT("GFXR", "vkQueueSubmit", [&](perfetto::EventContext ctx) {
             ctx.AddDebugAnnotation(perfetto::DynamicString{ "vkQueueSubmit:" }, block_index);
 
@@ -140,24 +147,11 @@ VKAPI_ATTR VkResult VKAPI_CALL layer_QueueSubmit(VkQueue             queue,
         TRACE_EVENT_INSTANT("GFXR", "vkQueueSubmit (empty)", [&](perfetto::EventContext ctx) {});
     }
 
-    // Forward function to next layer / driver
-    VkResult                           result       = VK_SUCCESS;
-    base_layer::device_dispatch_table* device_table = base_layer::get_device_handle(queue);
-    if (device_table && device_table->dispatch_table.QueueSubmit)
-    {
-        result = device_table->dispatch_table.QueueSubmit(queue, submitCount, pSubmits, fence);
-    }
-
     return result;
 }
 
 VKAPI_ATTR VkResult VKAPI_CALL layer_vkQueuePresentKHR(VkQueue queue, const VkPresentInfoKHR* pPresentInfo)
 {
-    const uint64_t block_index = GetBlockIndexGFXR_fp ? GetBlockIndexGFXR_fp() : 0;
-
-    const std::string submit_name = "QueuePresent: " + std::to_string(block_index);
-    TRACE_EVENT_INSTANT("GFXR", perfetto::DynamicString{ submit_name.c_str() }, "Command ID:", block_index);
-
     // Forward function to next layer / driver
     VkResult                           result       = VK_SUCCESS;
     base_layer::device_dispatch_table* device_table = base_layer::get_device_handle(queue);
@@ -165,6 +159,10 @@ VKAPI_ATTR VkResult VKAPI_CALL layer_vkQueuePresentKHR(VkQueue queue, const VkPr
     {
         result = device_table->dispatch_table.QueuePresentKHR(queue, pPresentInfo);
     }
+
+    const uint64_t block_index = GetBlockIndexGFXR_fp ? GetBlockIndexGFXR_fp() : 0;
+    const std::string submit_name = "QueuePresent: " + std::to_string(block_index);
+    TRACE_EVENT_INSTANT("GFXR", perfetto::DynamicString{ submit_name.c_str() }, "Command ID:", block_index);
 
     return result;
 }
