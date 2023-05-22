@@ -48,3 +48,5 @@ target_include_directories(VkLayer_gfxreconstruct_perfetto
 )
 
 target_link_libraries(VkLayer_gfxreconstruct_perfetto perfetto)
+
+configure_file(VkLayer_gfxreconstruct_perfetto.json VkLayer_gfxreconstruct_perfetto.json COPYONLY)
