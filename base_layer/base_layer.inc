@@ -397,7 +397,7 @@ void base_layer_print_info(const char* format, ...)
     __android_log_print(ANDROID_LOG_INFO, "[" LAYER_NAME "]", format, args);
 #else
     printf("[" LAYER_NAME "] ");
-    printf(format, args);
+    vfprintf(stdout, format, args);
 #endif
 
     va_end(args);
@@ -412,7 +412,7 @@ void base_layer_print_error(const char* format, ...)
     __android_log_print(ANDROID_LOG_ERROR, "[" LAYER_NAME "]", format, args);
 #else
     fprintf(stderr, "[" LAYER_NAME "] ");
-    fprintf(stderr, format, args);
+    vfprintf(stderr, format, args);
 #endif
 
     va_end(args);
