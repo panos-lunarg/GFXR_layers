@@ -36,7 +36,7 @@
 
 static void InitializePerfetto()
 {
-    bool initialized = false;
+    static bool initialized = false;
 
     if (!initialized)
     {
