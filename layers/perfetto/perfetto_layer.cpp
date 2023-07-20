@@ -150,7 +150,7 @@ VKAPI_ATTR VkResult VKAPI_CALL layer_QueueSubmit(VkQueue             queue,
     return result;
 }
 
-VKAPI_ATTR VkResult VKAPI_CALL layer_vkQueuePresentKHR(VkQueue queue, const VkPresentInfoKHR* pPresentInfo)
+VKAPI_ATTR VkResult VKAPI_CALL layer_QueuePresentKHR(VkQueue queue, const VkPresentInfoKHR* pPresentInfo)
 {
     // Forward function to next layer / driver
     VkResult                           result       = VK_SUCCESS;
@@ -161,8 +161,9 @@ VKAPI_ATTR VkResult VKAPI_CALL layer_vkQueuePresentKHR(VkQueue queue, const VkPr
     }
 
     const uint64_t block_index = GetBlockIndexGFXR_fp ? GetBlockIndexGFXR_fp() : 0;
-    const std::string submit_name = "QueuePresent: " + std::to_string(block_index);
-    TRACE_EVENT_INSTANT("GFXR", perfetto::DynamicString{ submit_name.c_str() }, "Command ID:", block_index);
+    TRACE_EVENT_INSTANT("GFXR", "QueuePresent", [&](perfetto::EventContext ctx) {
+        ctx.AddDebugAnnotation(perfetto::DynamicString{ "QueuePresent:" }, block_index);
+    });
 
     return result;
 }
@@ -180,7 +181,7 @@ VKAPI_ATTR PFN_vkVoidFunction VKAPI_CALL layer_GetDeviceProcAddr(VkDevice device
         return (PFN_vkVoidFunction)layer_QueueSubmit;
 
     if (!strcmp(pName, "vkQueuePresentKHR"))
-        return (PFN_vkVoidFunction)layer_vkQueuePresentKHR;
+        return (PFN_vkVoidFunction)layer_QueuePresentKHR;
 
     return base_layer::base_layer_GetDeviceProcAddr(device, pName);
 }
