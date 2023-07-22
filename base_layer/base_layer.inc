@@ -22,6 +22,7 @@
 */
 
 #include "base_layer.h"
+#include "base_layer_logging.inc"
 #include "child_layer.h"
 
 #include "vulkan/vk_layer.h"
@@ -388,66 +389,94 @@ VKAPI_ATTR VkResult VKAPI_CALL EnumerateDeviceLayerProperties(VkPhysicalDevice  
     return EnumerateInstanceLayerProperties(pPropertyCount, pProperties);
 }
 
-std::string ConvertFormatVaListToString(const std::string& format_string, va_list& var_args)
+VKAPI_ATTR PFN_vkVoidFunction VKAPI_CALL GetProcAddr(const char* pName)
 {
-    va_list var_args_copy;
-    va_copy(var_args_copy, var_args);
-    try
+    PFN_vkVoidFunction result = nullptr;
+
+    if (!strcmp("vkGetInstanceProcAddr", pName))
     {
-        // Determine how much space is needed in the new string
-        const int32_t sz = std::vsnprintf(nullptr, 0, format_string.c_str(), var_args) + 1;
-
-        // Create a result string and clear it with spaces and then copy the formatted
-        // string results into it.
-        std::string result_string(sz, ' ');
-        std::vsnprintf(&result_string.front(), sz, format_string.c_str(), var_args_copy);
-        va_end(var_args_copy);
-        return result_string;
+        result = reinterpret_cast<PFN_vkVoidFunction>(layer_GetInstanceProcAddr);
     }
-    catch (...)
+    else if (!strcmp("vkGetDeviceProcAddr", pName))
     {
-        va_end(var_args_copy);
-        return "";
+        result = reinterpret_cast<PFN_vkVoidFunction>(layer_GetDeviceProcAddr);
     }
+    else if (!strcmp("vkEnumerateInstanceExtensionProperties", pName))
+    {
+        result = reinterpret_cast<PFN_vkVoidFunction>(EnumerateInstanceExtensionProperties);
+    }
+    else if (!strcmp("vkEnumerateDeviceExtensionProperties", pName))
+    {
+        result = reinterpret_cast<PFN_vkVoidFunction>(EnumerateDeviceExtensionProperties);
+    }
+    else if (!strcmp("vkEnumerateInstanceLayerProperties", pName))
+    {
+        result = reinterpret_cast<PFN_vkVoidFunction>(EnumerateInstanceLayerProperties);
+    }
+    else if (!strcmp("vkEnumerateDeviceLayerProperties", pName))
+    {
+        result = reinterpret_cast<PFN_vkVoidFunction>(EnumerateDeviceLayerProperties);
+    }
+
+    return result;
 }
 
-void base_layer_print_info(const char* format, ...)
-{
-    va_list args;
-    va_start(args, format);
-
-    const std::string printf_msg = ConvertFormatVaListToString(format, args);
-
-#if defined(__ANDROID__)
-    __android_log_print(ANDROID_LOG_INFO, "[" LAYER_NAME "]", "%s", printf_msg.c_str());
-#else
-    printf("[" LAYER_NAME "] ");
-    fprintf(stdout, "%s", printf_msg.c_str());
-#endif
-
-    va_end(args);
-}
-
-void base_layer_print_error(const char* format, ...)
-{
-    va_list args;
-    va_start(args, format);
-
-    const std::string printf_msg = ConvertFormatVaListToString(format, args);
-
-#if defined(__ANDROID__)
-    __android_log_print(ANDROID_LOG_ERROR, "[" LAYER_NAME "]", "%s", printf_msg.c_str());
-#else
-    fprintf(stderr, "[" LAYER_NAME "] ");
-    fprintf(stderr, "%s", printf_msg.c_str());
-#endif
-
-    va_end(args);
-}
 } // namespace base_layer
 
 extern "C"
 {
+
+    VKAPI_ATTR VkResult VKAPI_CALL vkNegotiateLoaderLayerInterfaceVersion(VkNegotiateLayerInterface* pVersionStruct)
+    {
+        assert(pVersionStruct != NULL);
+        assert(pVersionStruct->sType == LAYER_NEGOTIATE_INTERFACE_STRUCT);
+
+        // Fill in the function pointers if our version is at least capable of having the structure contain them.
+        if (pVersionStruct->loaderLayerInterfaceVersion >= 2)
+        {
+            pVersionStruct->pfnGetInstanceProcAddr       = layer_GetInstanceProcAddr;
+            pVersionStruct->pfnGetDeviceProcAddr         = layer_GetDeviceProcAddr;
+            pVersionStruct->pfnGetPhysicalDeviceProcAddr = base_layer::base_layer_GetPhysicalDeviceProcAddr;
+        }
+
+        if (pVersionStruct->loaderLayerInterfaceVersion > CURRENT_LOADER_LAYER_INTERFACE_VERSION)
+        {
+            pVersionStruct->loaderLayerInterfaceVersion = CURRENT_LOADER_LAYER_INTERFACE_VERSION;
+        }
+
+        return VK_SUCCESS;
+    }
+
+    // The following two functions are not directly invoked by the desktop loader, which instead uses the function
+    // pointers returned by the negotiate function.
+    VKAPI_ATTR PFN_vkVoidFunction VKAPI_CALL vkGetInstanceProcAddr(VkInstance instance, const char* pName)
+    {
+        PFN_vkVoidFunction result = nullptr;
+
+        result = base_layer::GetProcAddr(pName);
+
+        if (!result)
+        {
+            result = layer_GetInstanceProcAddr(instance, pName);
+        }
+
+        return result;
+    }
+
+    VKAPI_ATTR PFN_vkVoidFunction VKAPI_CALL vkGetDeviceProcAddr(VkDevice device, const char* pName)
+    {
+        PFN_vkVoidFunction result = nullptr;
+
+        result = base_layer::GetProcAddr(pName);
+
+        if (!result)
+        {
+            result = layer_GetDeviceProcAddr(device, pName);
+        }
+
+        return result;
+    }
+
     VKAPI_ATTR VkResult VKAPI_CALL vkEnumerateDeviceExtensionProperties(VkPhysicalDevice       physicalDevice,
                                                                         const char*            pLayerName,
                                                                         uint32_t*              pPropertyCount,
@@ -476,39 +505,6 @@ extern "C"
     {
         assert(physicalDevice == VK_NULL_HANDLE);
         return base_layer::EnumerateDeviceLayerProperties(physicalDevice, pPropertyCount, pProperties);
-    }
-
-    VKAPI_ATTR VkResult VKAPI_CALL vkNegotiateLoaderLayerInterfaceVersion(VkNegotiateLayerInterface* pVersionStruct)
-    {
-        assert(pVersionStruct != NULL);
-        assert(pVersionStruct->sType == LAYER_NEGOTIATE_INTERFACE_STRUCT);
-
-        // Fill in the function pointers if our version is at least capable of having the structure contain them.
-        if (pVersionStruct->loaderLayerInterfaceVersion >= 2)
-        {
-            pVersionStruct->pfnGetInstanceProcAddr       = layer_GetInstanceProcAddr;
-            pVersionStruct->pfnGetDeviceProcAddr         = layer_GetDeviceProcAddr;
-            pVersionStruct->pfnGetPhysicalDeviceProcAddr = base_layer::base_layer_GetPhysicalDeviceProcAddr;
-        }
-
-        if (pVersionStruct->loaderLayerInterfaceVersion > CURRENT_LOADER_LAYER_INTERFACE_VERSION)
-        {
-            pVersionStruct->loaderLayerInterfaceVersion = CURRENT_LOADER_LAYER_INTERFACE_VERSION;
-        }
-
-        return VK_SUCCESS;
-    }
-
-    // The following two functions are not directly invoked by the desktop loader, which instead uses the function
-    // pointers returned by the negotiate function.
-    VKAPI_ATTR PFN_vkVoidFunction VKAPI_CALL vkGetInstanceProcAddr(VkInstance instance, const char* pName)
-    {
-        return layer_GetInstanceProcAddr(instance, pName);
-    }
-
-    VKAPI_ATTR PFN_vkVoidFunction VKAPI_CALL vkGetDeviceProcAddr(VkDevice device, const char* pName)
-    {
-        return layer_GetDeviceProcAddr(device, pName);
     }
 
 } // extern "C"

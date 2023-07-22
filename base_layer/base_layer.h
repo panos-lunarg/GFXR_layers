@@ -82,14 +82,33 @@ VKAPI_ATTR VkResult VKAPI_CALL EnumerateDeviceLayerProperties(VkPhysicalDevice  
                                                               uint32_t*          pPropertyCount,
                                                               VkLayerProperties* pProperties);
 
-VKAPI_ATTR VkResult VKAPI_CALL dispatch_CreateInstance(const VkInstanceCreateInfo*  pCreateInfo,
-                                                       const VkAllocationCallbacks* pAllocator,
-                                                       VkInstance*                  pInstance);
+VKAPI_ATTR VkResult VKAPI_CALL base_layer_CreateInstance(const VkInstanceCreateInfo*  pCreateInfo,
+                                                         const VkAllocationCallbacks* pAllocator,
+                                                         VkInstance*                  pInstance);
 
-VKAPI_ATTR VkResult VKAPI_CALL dispatch_CreateDevice(VkPhysicalDevice             physicalDevice,
-                                                     const VkDeviceCreateInfo*    pCreateInfo,
-                                                     const VkAllocationCallbacks* pAllocator,
-                                                     VkDevice*                    pDevice);
+VKAPI_ATTR VkResult VKAPI_CALL base_layer_CreateDevice(VkPhysicalDevice             physicalDevice,
+                                                       const VkDeviceCreateInfo*    pCreateInfo,
+                                                       const VkAllocationCallbacks* pAllocator,
+                                                       VkDevice*                    pDevice);
+
+extern "C"
+{
+    VKAPI_ATTR VkResult VKAPI_CALL vkNegotiateLoaderLayerInterfaceVersion(VkNegotiateLayerInterface* pVersionStruct);
+    VKAPI_ATTR PFN_vkVoidFunction VKAPI_CALL vkGetInstanceProcAddr(VkInstance instance, const char* pName);
+    VKAPI_ATTR PFN_vkVoidFunction VKAPI_CALL vkGetDeviceProcAddr(VkDevice device, const char* pName);
+    VKAPI_ATTR VkResult VKAPI_CALL           vkEnumerateDeviceExtensionProperties(VkPhysicalDevice       physicalDevice,
+                                                                                  const char*            pLayerName,
+                                                                                  uint32_t*              pPropertyCount,
+                                                                                  VkExtensionProperties* pProperties);
+    VKAPI_ATTR VkResult VKAPI_CALL           vkEnumerateInstanceExtensionProperties(const char*            pLayerName,
+                                                                                    uint32_t*              pPropertyCount,
+                                                                                    VkExtensionProperties* pProperties);
+    VKAPI_ATTR VkResult VKAPI_CALL           vkEnumerateInstanceLayerProperties(uint32_t*          pPropertyCount,
+                                                                                VkLayerProperties* pProperties);
+    VKAPI_ATTR VkResult VKAPI_CALL           vkEnumerateDeviceLayerProperties(VkPhysicalDevice   physicalDevice,
+                                                                              uint32_t*          pPropertyCount,
+                                                                              VkLayerProperties* pProperties);
+}
 
 struct instance_dispatch_table
 {

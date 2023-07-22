@@ -28,24 +28,25 @@
 #include "vulkan/vk_layer.h"
 
 // The following functions must be defined by each implemented layer
+VKAPI_ATTR VkResult VKAPI_CALL layer_CreateInstance(const VkInstanceCreateInfo*  pCreateInfo,
+                                                    const VkAllocationCallbacks* pAllocator,
+                                                    VkInstance*                  pInstance);
 
-VkResult layer_CreateInstance(const VkInstanceCreateInfo*  pCreateInfo,
-                              const VkAllocationCallbacks* pAllocator,
-                              VkInstance*                  pInstance);
-
-VkResult layer_CreateDevice(VkPhysicalDevice             physicalDevice,
-                            const VkDeviceCreateInfo*    pCreateInfo,
-                            const VkAllocationCallbacks* pAllocator,
-                            VkDevice*                    pDevice);
+VKAPI_ATTR VkResult VKAPI_CALL layer_CreateDevice(VkPhysicalDevice             physicalDevice,
+                                                  const VkDeviceCreateInfo*    pCreateInfo,
+                                                  const VkAllocationCallbacks* pAllocator,
+                                                  VkDevice*                    pDevice);
 
 VKAPI_ATTR PFN_vkVoidFunction VKAPI_CALL layer_GetInstanceProcAddr(VkInstance instance, const char* pName);
+
 VKAPI_ATTR PFN_vkVoidFunction VKAPI_CALL layer_GetDeviceProcAddr(VkDevice device, const char* pName);
 
-extern "C"
-{
-    VKAPI_ATTR VkResult VKAPI_CALL vkNegotiateLoaderLayerInterfaceVersion(VkNegotiateLayerInterface* pVersionStruct);
-    VKAPI_ATTR PFN_vkVoidFunction VKAPI_CALL vkGetInstanceProcAddr(VkInstance instance, const char* pName);
-    VKAPI_ATTR PFN_vkVoidFunction VKAPI_CALL vkGetDeviceProcAddr(VkDevice device, const char* pName);
-}
+// Rest functions are up to the layer to implement or not
+VKAPI_ATTR VkResult VKAPI_CALL layer_QueuePresentKHR(VkQueue queue, const VkPresentInfoKHR* pPresentInfo);
+
+VKAPI_ATTR VkResult VKAPI_CALL layer_QueueSubmit(VkQueue             queue,
+                                                 uint32_t            submitCount,
+                                                 const VkSubmitInfo* pSubmits,
+                                                 VkFence             fence);
 
 #endif // CHILD_LAYER_H_
