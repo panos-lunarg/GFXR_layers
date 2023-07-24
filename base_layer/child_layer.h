@@ -41,12 +41,4 @@ VKAPI_ATTR PFN_vkVoidFunction VKAPI_CALL layer_GetInstanceProcAddr(VkInstance in
 
 VKAPI_ATTR PFN_vkVoidFunction VKAPI_CALL layer_GetDeviceProcAddr(VkDevice device, const char* pName);
 
-// Rest functions are up to the layer to implement or not
-VKAPI_ATTR VkResult VKAPI_CALL layer_QueuePresentKHR(VkQueue queue, const VkPresentInfoKHR* pPresentInfo);
-
-VKAPI_ATTR VkResult VKAPI_CALL layer_QueueSubmit(VkQueue             queue,
-                                                 uint32_t            submitCount,
-                                                 const VkSubmitInfo* pSubmits,
-                                                 VkFence             fence);
-
 #endif // CHILD_LAYER_H_

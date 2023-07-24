@@ -196,21 +196,54 @@ VKAPI_ATTR VkResult VKAPI_CALL base_layer_CreateDevice(VkPhysicalDevice         
     return result;
 }
 
-VKAPI_ATTR PFN_vkVoidFunction VKAPI_CALL base_layer_GetInstanceProcAddr(VkInstance instance, const char* pName)
+VKAPI_ATTR PFN_vkVoidFunction VKAPI_CALL GetProcAddr(const char* pName)
 {
     PFN_vkVoidFunction result = nullptr;
 
-    if (!strcmp(pName, "vkCreateInstance"))
+    if (pName)
     {
-        return reinterpret_cast<PFN_vkVoidFunction>(base_layer_CreateInstance);
+        if (!strcmp("vkCreateInstance", pName))
+        {
+            result = reinterpret_cast<PFN_vkVoidFunction>(base_layer_CreateInstance);
+        }
+        else if (!strcmp("vkCreateDevice", pName))
+        {
+            result = reinterpret_cast<PFN_vkVoidFunction>(base_layer_CreateDevice);
+        }
+        else if (!strcmp("vkGetInstanceProcAddr", pName))
+        {
+            result = reinterpret_cast<PFN_vkVoidFunction>(layer_GetInstanceProcAddr);
+        }
+        else if (!strcmp("vkGetDeviceProcAddr", pName))
+        {
+            result = reinterpret_cast<PFN_vkVoidFunction>(layer_GetDeviceProcAddr);
+        }
+        else if (!strcmp("vkEnumerateInstanceExtensionProperties", pName))
+        {
+            result = reinterpret_cast<PFN_vkVoidFunction>(EnumerateInstanceExtensionProperties);
+        }
+        else if (!strcmp("vkEnumerateDeviceExtensionProperties", pName))
+        {
+            result = reinterpret_cast<PFN_vkVoidFunction>(EnumerateDeviceExtensionProperties);
+        }
+        else if (!strcmp("vkEnumerateInstanceLayerProperties", pName))
+        {
+            result = reinterpret_cast<PFN_vkVoidFunction>(EnumerateInstanceLayerProperties);
+        }
+        else if (!strcmp("vkEnumerateDeviceLayerProperties", pName))
+        {
+            result = reinterpret_cast<PFN_vkVoidFunction>(EnumerateDeviceLayerProperties);
+        }
     }
 
-    if (!strcmp(pName, "vkCreateDevice"))
-    {
-        return reinterpret_cast<PFN_vkVoidFunction>(base_layer_CreateDevice);
-    }
+    return result;
+}
 
-    if (instance != VK_NULL_HANDLE)
+VKAPI_ATTR PFN_vkVoidFunction VKAPI_CALL base_layer_GetInstanceProcAddr(VkInstance instance, const char* pName)
+{
+    PFN_vkVoidFunction result = GetProcAddr(pName);
+
+    if (!result && instance != VK_NULL_HANDLE)
     {
         instance_dispatch_table* instance_table = get_instance_handle(instance);
         if ((instance_table != nullptr) && (instance_table->dispatch_table.GetInstanceProcAddr != nullptr))
@@ -228,10 +261,15 @@ VKAPI_ATTR PFN_vkVoidFunction VKAPI_CALL base_layer_GetDeviceProcAddr(VkDevice d
 
     if (device != VK_NULL_HANDLE)
     {
-        device_dispatch_table* device_table = get_device_handle(device);
-        if ((device_table != nullptr) && (device_table->dispatch_table.GetDeviceProcAddr != nullptr))
+        result = GetProcAddr(pName);
+
+        if (!result)
         {
-            result = device_table->dispatch_table.GetDeviceProcAddr(device, pName);
+            device_dispatch_table* device_table = get_device_handle(device);
+            if ((device_table != nullptr) && (device_table->dispatch_table.GetDeviceProcAddr != nullptr))
+            {
+                result = device_table->dispatch_table.GetDeviceProcAddr(device, pName);
+            }
         }
     }
 
@@ -389,38 +427,6 @@ VKAPI_ATTR VkResult VKAPI_CALL EnumerateDeviceLayerProperties(VkPhysicalDevice  
     return EnumerateInstanceLayerProperties(pPropertyCount, pProperties);
 }
 
-VKAPI_ATTR PFN_vkVoidFunction VKAPI_CALL GetProcAddr(const char* pName)
-{
-    PFN_vkVoidFunction result = nullptr;
-
-    if (!strcmp("vkGetInstanceProcAddr", pName))
-    {
-        result = reinterpret_cast<PFN_vkVoidFunction>(layer_GetInstanceProcAddr);
-    }
-    else if (!strcmp("vkGetDeviceProcAddr", pName))
-    {
-        result = reinterpret_cast<PFN_vkVoidFunction>(layer_GetDeviceProcAddr);
-    }
-    else if (!strcmp("vkEnumerateInstanceExtensionProperties", pName))
-    {
-        result = reinterpret_cast<PFN_vkVoidFunction>(EnumerateInstanceExtensionProperties);
-    }
-    else if (!strcmp("vkEnumerateDeviceExtensionProperties", pName))
-    {
-        result = reinterpret_cast<PFN_vkVoidFunction>(EnumerateDeviceExtensionProperties);
-    }
-    else if (!strcmp("vkEnumerateInstanceLayerProperties", pName))
-    {
-        result = reinterpret_cast<PFN_vkVoidFunction>(EnumerateInstanceLayerProperties);
-    }
-    else if (!strcmp("vkEnumerateDeviceLayerProperties", pName))
-    {
-        result = reinterpret_cast<PFN_vkVoidFunction>(EnumerateDeviceLayerProperties);
-    }
-
-    return result;
-}
-
 } // namespace base_layer
 
 extern "C"
@@ -451,30 +457,12 @@ extern "C"
     // pointers returned by the negotiate function.
     VKAPI_ATTR PFN_vkVoidFunction VKAPI_CALL vkGetInstanceProcAddr(VkInstance instance, const char* pName)
     {
-        PFN_vkVoidFunction result = nullptr;
-
-        result = base_layer::GetProcAddr(pName);
-
-        if (!result)
-        {
-            result = layer_GetInstanceProcAddr(instance, pName);
-        }
-
-        return result;
+        return layer_GetInstanceProcAddr(instance, pName);
     }
 
     VKAPI_ATTR PFN_vkVoidFunction VKAPI_CALL vkGetDeviceProcAddr(VkDevice device, const char* pName)
     {
-        PFN_vkVoidFunction result = nullptr;
-
-        result = base_layer::GetProcAddr(pName);
-
-        if (!result)
-        {
-            result = layer_GetDeviceProcAddr(device, pName);
-        }
-
-        return result;
+        return layer_GetDeviceProcAddr(device, pName);
     }
 
     VKAPI_ATTR VkResult VKAPI_CALL vkEnumerateDeviceExtensionProperties(VkPhysicalDevice       physicalDevice,

@@ -187,32 +187,11 @@ VKAPI_ATTR PFN_vkVoidFunction VKAPI_CALL layer_GetProcAddr(const char* pName)
 
 VKAPI_ATTR PFN_vkVoidFunction VKAPI_CALL layer_GetInstanceProcAddr(VkInstance instance, const char* pName)
 {
-    PFN_vkVoidFunction result = nullptr;
+    (void)instance;
 
-    // This is required by the loader and is called directly with an "instance" actually
-    // set to the internal "loader_instance".  Detect that case and return
-    if (!strcmp(pName, "vkCreateInstance"))
-    {
-        return reinterpret_cast<PFN_vkVoidFunction>(base_layer::base_layer_CreateInstance);
-    }
+    PFN_vkVoidFunction result = layer_GetProcAddr(pName);
 
-    // Only check for a layer implementation of the requested function if it is available from the next level, or if
-    // the instance handle is null and we can't determine if it is available from the next level.
-    if (instance != VK_NULL_HANDLE)
-    {
-        base_layer::instance_dispatch_table* table = base_layer::get_instance_handle(instance);
-        if (table && table->dispatch_table.GetInstanceProcAddr)
-        {
-            result = table->dispatch_table.GetInstanceProcAddr(instance, pName);
-        }
-    }
-
-    if (result || instance == VK_NULL_HANDLE)
-    {
-        result = layer_GetProcAddr(pName);
-    }
-
-    if (result == nullptr)
+    if (!result)
     {
         result = base_layer::base_layer_GetInstanceProcAddr(instance, pName);
     }
@@ -222,25 +201,13 @@ VKAPI_ATTR PFN_vkVoidFunction VKAPI_CALL layer_GetInstanceProcAddr(VkInstance in
 
 VKAPI_ATTR PFN_vkVoidFunction VKAPI_CALL layer_GetDeviceProcAddr(VkDevice device, const char* pName)
 {
-    PFN_vkVoidFunction result = nullptr;
+    (void)device;
 
-    if (device != VK_NULL_HANDLE)
+    PFN_vkVoidFunction result = layer_GetProcAddr(pName);
+
+    if (!result)
     {
-        base_layer::device_dispatch_table* table = base_layer::get_device_handle(device);
-        if (table && table->dispatch_table.GetDeviceProcAddr)
-        {
-            result = table->dispatch_table.GetDeviceProcAddr(device, pName);
-
-            if (result)
-            {
-                result = layer_GetProcAddr(pName);
-            }
-        }
-
-        if (result == nullptr)
-        {
-            result = base_layer::base_layer_GetDeviceProcAddr(device, pName);
-        }
+        result = base_layer::base_layer_GetDeviceProcAddr(device, pName);
     }
 
     return result;
