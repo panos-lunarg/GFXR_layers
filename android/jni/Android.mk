@@ -36,16 +36,26 @@ LOCAL_C_INCLUDES += $(SRC_DIR)/../external/perfetto/perfetto/sdk
 LOCAL_CPPFLAGS += -std=c++17 -Wall -Werror -Wno-unused-function -Wno-unused-const-variable
 include $(BUILD_STATIC_LIBRARY)
 
+# include $(CLEAR_VARS)
+# LOCAL_MODULE := libVkLayer_gfxreconstruct_perfetto
+# LOCAL_SRC_FILES += $(SRC_DIR)/../layers/perfetto/perfetto_layer.cpp
+# LOCAL_SRC_FILES += $(SRC_DIR)/../layers/perfetto/perfetto_tracing_categories.cpp
+# LOCAL_C_INCLUDES += $(SRC_DIR)/
+# LOCAL_C_INCLUDES += $(SRC_DIR)/base_layer
+# LOCAL_C_INCLUDES += $(SRC_DIR)/external/Vulkan-Headers/include
+# LOCAL_C_INCLUDES += $(SRC_DIR)/external/perfetto/sdk
+# LOCAL_C_INCLUDES += $(SRC_DIR)/layers/perfetto
+# LOCAL_STATIC_LIBRARIES += perfetto_lib
+# LOCAL_CPPFLAGS += -std=c++17 -DVK_PROTOTYPES -DVK_ENABLE_BETA_EXTENSIONS -Wall -Werror -Wno-unused-function -Wno-unused-const-variable -fexceptions
+# LOCAL_LDLIBS := -llog
+# include $(BUILD_SHARED_LIBRARY)
+
 include $(CLEAR_VARS)
-LOCAL_MODULE := libVkLayer_gfxreconstruct_perfetto
-LOCAL_SRC_FILES += $(SRC_DIR)/../layers/perfetto/perfetto_layer.cpp
-LOCAL_SRC_FILES += $(SRC_DIR)/../layers/perfetto/perfetto_tracing_categories.cpp
+LOCAL_MODULE := libVkLayer_342
+LOCAL_SRC_FILES += $(SRC_DIR)/../layers/342/342_layer.cpp
 LOCAL_C_INCLUDES += $(SRC_DIR)/
 LOCAL_C_INCLUDES += $(SRC_DIR)/base_layer
 LOCAL_C_INCLUDES += $(SRC_DIR)/external/Vulkan-Headers/include
-LOCAL_C_INCLUDES += $(SRC_DIR)/external/perfetto/sdk
-LOCAL_C_INCLUDES += $(SRC_DIR)/layers/perfetto
-LOCAL_STATIC_LIBRARIES += perfetto_lib
 LOCAL_CPPFLAGS += -std=c++17 -DVK_PROTOTYPES -DVK_ENABLE_BETA_EXTENSIONS -Wall -Werror -Wno-unused-function -Wno-unused-const-variable -fexceptions
 LOCAL_LDLIBS := -llog
 include $(BUILD_SHARED_LIBRARY)
