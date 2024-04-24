@@ -26,6 +26,7 @@
 
 #include "logging.h"
 #include "vulkan/vulkan.h"
+#include "VK_ANDROID_frame_boundary.h"
 
 #include <assert.h>
 

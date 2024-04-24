@@ -166,6 +166,21 @@ VKAPI_ATTR VkResult VKAPI_CALL layer_QueuePresentKHR(VkQueue queue, const VkPres
     return result;
 }
 
+VKAPI_PTR void VKAPI_CALL layer_FrameBoundaryANDROID(VkDevice device, VkSemaphore semaphore, VkImage image)
+{
+    // Forward function to next layer / driver
+    base_layer::device_dispatch_table* device_table = base_layer::get_device_handle(device);
+    if (device_table && device_table->dispatch_table.FrameBoundaryANDROID)
+    {
+        device_table->dispatch_table.FrameBoundaryANDROID(device, semaphore, image);
+    }
+
+    const uint64_t block_index = GetBlockIndexGFXR_fp ? GetBlockIndexGFXR_fp() : 0;
+    TRACE_EVENT_INSTANT("GFXR", "FrameBoundaryANDROID", [&](perfetto::EventContext ctx) {
+        ctx.AddDebugAnnotation(perfetto::DynamicString{ "FrameBoundaryANDROID:" }, block_index);
+    });
+}
+
 VKAPI_ATTR PFN_vkVoidFunction VKAPI_CALL layer_GetProcAddr(const char* pName)
 {
     PFN_vkVoidFunction result = nullptr;
@@ -179,6 +194,10 @@ VKAPI_ATTR PFN_vkVoidFunction VKAPI_CALL layer_GetProcAddr(const char* pName)
         else if (!strcmp(pName, "vkQueuePresentKHR"))
         {
             result = (PFN_vkVoidFunction)layer_QueuePresentKHR;
+        }
+        else if (!strcmp(pName, "vkFrameBoundaryANDROID"))
+        {
+            result = (PFN_vkVoidFunction)layer_FrameBoundaryANDROID;
         }
     }
 

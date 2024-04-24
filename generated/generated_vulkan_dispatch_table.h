@@ -458,6 +458,7 @@ struct DeviceTable
     PFN_vkGetDeviceBufferMemoryRequirementsKHR GetDeviceBufferMemoryRequirementsKHR{ nullptr };
     PFN_vkGetDeviceImageMemoryRequirementsKHR GetDeviceImageMemoryRequirementsKHR{ nullptr };
     PFN_vkGetDeviceImageSparseMemoryRequirementsKHR GetDeviceImageSparseMemoryRequirementsKHR{ nullptr };
+    PFN_vkFrameBoundaryANDROID FrameBoundaryANDROID{ nullptr };
     PFN_vkDebugMarkerSetObjectTagEXT DebugMarkerSetObjectTagEXT{ nullptr };
     PFN_vkDebugMarkerSetObjectNameEXT DebugMarkerSetObjectNameEXT{ nullptr };
     PFN_vkCmdDebugMarkerBeginEXT CmdDebugMarkerBeginEXT{ nullptr };
@@ -1081,6 +1082,7 @@ static void LoadDeviceTable(PFN_vkGetDeviceProcAddr gpa, VkDevice device, Device
     LoadFunction(gpa, device, "vkGetDeviceBufferMemoryRequirementsKHR", &table->GetDeviceBufferMemoryRequirementsKHR);
     LoadFunction(gpa, device, "vkGetDeviceImageMemoryRequirementsKHR", &table->GetDeviceImageMemoryRequirementsKHR);
     LoadFunction(gpa, device, "vkGetDeviceImageSparseMemoryRequirementsKHR", &table->GetDeviceImageSparseMemoryRequirementsKHR);
+    LoadFunction(gpa, device, "vkFrameBoundaryANDROID", &table->FrameBoundaryANDROID);
     LoadFunction(gpa, device, "vkDebugMarkerSetObjectTagEXT", &table->DebugMarkerSetObjectTagEXT);
     LoadFunction(gpa, device, "vkDebugMarkerSetObjectNameEXT", &table->DebugMarkerSetObjectNameEXT);
     LoadFunction(gpa, device, "vkCmdDebugMarkerBeginEXT", &table->CmdDebugMarkerBeginEXT);
