@@ -32,6 +32,7 @@
 
 #include "perfetto_tracing_categories.h"
 
+#include <dlfcn.h>
 #include <sstream>
 
 static void InitializePerfetto()
@@ -52,6 +53,9 @@ static void InitializePerfetto()
 
 typedef uint64_t(VKAPI_PTR* PFN_vkGetBlockIndexGFXR)();
 static PFN_vkGetBlockIndexGFXR GetBlockIndexGFXR_fp = nullptr;
+
+typedef uint64_t(*PFN_GetCurrentBlockIndexReplay)();
+static PFN_GetCurrentBlockIndexReplay GetCurrentBlockIndexReplay_fp = nullptr;
 
 VKAPI_ATTR VkResult VKAPI_CALL layer_CreateInstance(const VkInstanceCreateInfo*  pCreateInfo,
                                                     const VkAllocationCallbacks* pAllocator,
@@ -78,6 +82,20 @@ VKAPI_ATTR VkResult VKAPI_CALL layer_CreateInstance(const VkInstanceCreateInfo* 
     else
     {
         base_layer::base_layer_print_error("Retrieving instance table for instance %p failed\n", *pInstance);
+    }
+
+    void* main_symbols = dlopen(nullptr, RTLD_LAZY | RTLD_LOCAL);
+    if (main_symbols != nullptr)
+    {
+        GetCurrentBlockIndexReplay_fp = reinterpret_cast<PFN_GetCurrentBlockIndexReplay>(dlsym(main_symbols, "MainGetCurrentBlockIndex"));
+        if (GetCurrentBlockIndexReplay_fp == nullptr)
+        {
+            base_layer::base_layer_print_error("dlsym failed with: %s", dlerror());
+        }
+    }
+    else
+    {
+        base_layer::base_layer_print_error("dlopen failed with: %s", dlerror());
     }
 
     return VK_SUCCESS;
